@@ -76,8 +76,39 @@ public class DivByZeroTransfer extends CFTransfer {
    */
   private AnnotationMirror refineLhsOfComparison(
       Comparison operator, AnnotationMirror lhs, AnnotationMirror rhs) {
-    // TODO
-    return lhs;
+      if (operator == Comparison.EQ) {
+          return lhs; 
+      } else if (operator == Comparison.NE) {
+          if (equal(rhs, reflect(Positive.class))) {
+              return glb(lhs, reflect(Negative.class));
+          }
+          if (equal(rhs, reflect(Negative.class))) {
+              return glb(lhs, reflect(Positive.class));
+          }
+          return bottom();
+      } else if (operator == Comparison.LT) {
+          if (equal(rhs, reflect(Zero.class))) {
+              return glb(lhs, reflect(Negative.class));
+          }
+          return lhs;
+      } else if (operator == Comparison.LE) {
+          if (equal(rhs, reflect(Positive.class))) {
+              return glb(lhs, reflect(Positive.class));
+          }
+          return lhs;
+      } else if (operator == Comparison.GT) {
+          if (equal(rhs, reflect(Zero.class))) {
+              return glb(lhs, reflect(Positive.class));
+          }
+          return lhs;
+      } else if (operator == Comparison.GE) {
+          if (equal(rhs, reflect(Negative.class))) {
+              return glb(lhs, reflect(Negative.class));
+          }
+          return lhs;
+      } else {
+        return lhs;
+      }
   }
 
   /**
@@ -97,7 +128,99 @@ public class DivByZeroTransfer extends CFTransfer {
    */
   private AnnotationMirror arithmeticTransfer(
       BinaryOperator operator, AnnotationMirror lhs, AnnotationMirror rhs) {
-    // TODO
+    if (equal(lhs, bottom())) {
+      return bottom(); 
+    }
+    if (equal(rhs, bottom())) {
+      return bottom(); 
+    }
+    if (operator == BinaryOperator.PLUS) {
+      return additionTransfer(lhs, rhs);
+    }
+    else if (operator == BinaryOperator.MINUS) {
+      return subtractionTransfer(lhs, rhs);
+    }
+    else if (operator == BinaryOperator.TIMES) {
+      return multiplicationTransfer(lhs, rhs);
+    }
+    else if (operator == BinaryOperator.DIVIDE || operator == BinaryOperator.MOD) {
+      return divisionTransfer(lhs, rhs);
+    }
+    else return top();
+  }
+
+  private AnnotationMirror additionTransfer(AnnotationMirror lhs, AnnotationMirror rhs) {
+    if (equal(lhs, top())) {
+      return top(); 
+    }
+    else if (equal(rhs, top())) {
+      return top();
+    }
+    else if (equal(lhs, reflect(Zero.class))) {
+      return rhs;
+    }
+    else if (equal(rhs, reflect(Zero.class))) {
+      return lhs;
+    }
+    else if (equal(lhs, rhs)) {
+      return lhs; 
+    }
+    return top();
+  }
+
+  private AnnotationMirror subtractionTransfer(AnnotationMirror lhs, AnnotationMirror rhs) {
+      if (equal(lhs, top())) {
+          return top();
+      } else if (equal(rhs, top())) {
+          return top();
+      } else if (equal(lhs, reflect(Positive.class))) { 
+          if (equal(rhs, reflect(Positive.class))) { 
+              return top(); // P - P = TOP
+          }
+          return reflect(Positive.class);
+      } else if (equal(lhs, reflect(Negative.class))) { 
+          if (equal(rhs, reflect(Positive.class))) {
+              return top(); // N - P = TOP
+          }
+          return reflect(Negative.class); 
+      } else if (equal(lhs, reflect(Zero.class))) { 
+          if (equal(rhs, reflect(Positive.class))) {
+              return reflect(Negative.class); // 0 - P = N
+          } else if (equal(rhs, reflect(Negative.class))) {
+              return reflect(Positive.class); // 0 - N = P
+          }
+          return reflect(Zero.class); // 0 - 0 = 0
+      }
+      return top();
+  }
+
+  private AnnotationMirror multiplicationTransfer(AnnotationMirror lhs, AnnotationMirror rhs) {
+    if (equal(lhs, top())) {
+        return top();
+    } else if (equal(rhs, top())) {
+        return top();
+    } else if (equal(lhs, reflect(Zero.class))) {
+        return reflect(Zero.class);
+    } else if (equal(rhs, reflect(Zero.class))) {
+        return reflect(Zero.class);
+    } else if (equal(lhs, rhs)) {
+      return reflect(Positive.class);
+    } else if (!equal(lhs, rhs)) {
+      return reflect(Negative.class);
+    }
+    return top();
+  }
+
+  private AnnotationMirror divisionTransfer(AnnotationMirror lhs, AnnotationMirror rhs) {
+    if (equal(lhs, top())) {
+        return top();
+    } else if (equal(rhs, top())) {
+        return top();
+    } else if (equal(rhs, reflect(Zero.class))) {
+      return bottom(); 
+    } else if (equal(lhs, reflect(Zero.class))) {
+      return reflect(Zero.class);
+    }
     return top();
   }
 
