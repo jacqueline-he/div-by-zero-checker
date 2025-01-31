@@ -28,8 +28,20 @@ public class DivByZeroVisitor extends BaseTypeVisitor<DivByZeroAnnotatedTypeFact
    */
   private boolean errorAt(BinaryTree node) {
     // A BinaryTree can represent any binary operator, including + or -.
-    // TODO
-    return false;
+    if (node == null) {
+        return false;
+    }
+    Tree.Kind nodeKind = node.getKind();
+    // Check if node's kind is in DIVISION_OPERATORS
+    if (DIVISION_OPERATORS.contains(nodeKind)) {
+      // Get right operand from tree: 
+      // https://docs.oracle.com/en/java/javase/17/docs/api/jdk.compiler/com/sun/source/tree/BinaryTree.html 
+      Tree rightOperand = node.getRightOperand();
+      if (rightOperand != null && (hasAnnotation(rightOperand, Top.class) || hasAnnotation(rightOperand, Zero.class))) {
+            return true; 
+      }
+    }
+      return false; 
   }
 
   /**
@@ -42,8 +54,20 @@ public class DivByZeroVisitor extends BaseTypeVisitor<DivByZeroAnnotatedTypeFact
   private boolean errorAt(CompoundAssignmentTree node) {
     // A CompoundAssignmentTree represents any binary operator combined with an assignment,
     // such as "x += 10".
-    // TODO
-    return false;
+    if (node == null) {
+        return false;
+    }
+    Tree.Kind nodeKind = node.getKind();
+    // Check if node's kind is in DIVISION_OPERATORS
+    if (DIVISION_OPERATORS.contains(nodeKind)) {
+      // Get right hand side expression of the compound assignment from tree: 
+      // https://docs.oracle.com/en/java/javase/17/docs/api/jdk.compiler/com/sun/source/tree/CompoundAssignmentTree.html
+      Tree expression = node.getExpression();
+      if (expression != null && (hasAnnotation(expression, Top.class) || hasAnnotation(expression, Zero.class))) {
+            return true; 
+      }
+    }
+      return false; 
   }
 
   // ========================================================================
